@@ -6,7 +6,7 @@ interface Request {
 
   value: number;
 
-  type: string;
+  type: 'income' | 'outcome';
 }
 
 class CreateTransactionService {
@@ -17,11 +17,18 @@ class CreateTransactionService {
   }
 
   public execute({ title, value, type }: Request): Transaction {
+    const { total } = this.transactionsRepository.getBalance();
+
+    if (type === 'outcome' && total < value) {
+      throw new Error('You do not have enough balance');
+    }
+
     const transactions = this.transactionsRepository.create({
       title,
       value,
       type,
     });
+
     return transactions;
   }
 }

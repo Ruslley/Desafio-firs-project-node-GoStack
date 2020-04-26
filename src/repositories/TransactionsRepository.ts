@@ -1,12 +1,17 @@
 import Transaction from '../models/Transaction';
 
-interface Request {
-  title: string;
-
-  value: number;
-
-  type: string;
+interface Balance {
+  income: number;
+  outcome: number;
+  total: number;
 }
+
+interface CreateTransactionDTO {
+  title: string;
+  value: number;
+  type: 'income' | 'outcome';
+}
+
 class TransactionsRepository {
   private transactions: Transaction[];
 
@@ -18,13 +23,42 @@ class TransactionsRepository {
     return this.transactions;
   }
 
-  public getBalance() {}
+  public getBalance(): Balance {
+    const { income, outcome } = this.transactions.reduce(
+      // Desetruturar o balance -> income, outcome
+      (accumulator: Balance, transaction: Transaction) => {
+        // Esse transaction utilizado no switch é o segundo parametro passado no reduce
+        // Agrupando os valores de entradas e saidas
+        switch (transaction.type) {
+          case 'income':
+            accumulator.income += transaction.value;
+            break;
+          case 'outcome':
+            accumulator.outcome += transaction.value;
+            break;
+          default:
+            break;
+        }
+        return accumulator;
+      },
+      {
+        // no recude tem por padrão esse parametro inicial
+        income: 0,
+        outcome: 0,
+        total: 0,
+      },
+    );
 
-  public create({ title, value, type }: Request): Transaction {
-    const CreateTransactions = new Transaction({ title, value, type });
-    this.transactions.push(CreateTransactions);
-    return CreateTransactions;
+    const total = income - outcome;
+    return { income, outcome, total };
+  }
+
+  public create({ title, value, type }: CreateTransactionDTO): Transaction {
+    const transaction = new Transaction({ title, value, type });
+
+    this.transactions.push(transaction);
+
+    return transaction;
   }
 }
-
 export default TransactionsRepository;
